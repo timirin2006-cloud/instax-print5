@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instax Print — Фото на A4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0c0a;--surface:#161310;--card:#1e1a16;
+  --border:#2e2820;--border2:#3d3428;
+  --cream:#f5ede0;--cream2:#d4c4ae;
+  --gold:#c9933a;--gold2:#e8b86d;--gold-dim:rgba(201,147,58,0.15);
+  --red:#c0392b;--text:#e8ddd0;--text-dim:#7a6e62;
+  --r:14px;--rs:8px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Jost',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:999;opacity:.35}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:rgba(14,12,10,.93);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:0 40px;height:64px;
+  display:flex;align-items:center;justify-content:space-between}
+.logo-text{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--cream);letter-spacing:.04em}
+.logo-sub{font-size:.7rem;font-weight:300;color:var(--text-dim);letter-spacing:.15em;text-transform:uppercase;margin-left:12px}
+.hbadge{background:var(--gold-dim);border:1px solid var(--gold);color:var(--gold2);
+  font-size:.68rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:4px 12px;border-radius:20px}
+
+/* HERO */
+.hero{text-align:center;padding:64px 40px 48px;position:relative}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:600px;height:280px;background:radial-gradient(ellipse,rgba(201,147,58,.07) 0%,transparent 70%);pointer-events:none}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,5vw,3.6rem);font-weight:600;
+  color:var(--cream);line-height:1.1;margin-bottom:14px}
+.hero h1 em{font-style:italic;color:var(--gold2)}
+.hero p{font-size:.92rem;font-weight:300;color:var(--text-dim);max-width:460px;margin:0 auto;line-height:1.7}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:320px 1fr;gap:0;max-width:1400px;margin:0 auto;padding:0 40px 60px;align-items:start}
+
+/* SIDEBAR */
+.sidebar{position:sticky;top:64px;padding-right:28px;display:flex;flex-direction:column;gap:8px;
+  max-height:calc(100vh - 80px);overflow-y:auto;scrollbar-width:none}
+.sidebar::-webkit-scrollbar{display:none}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:border-color .2s}
+.panel:hover{border-color:var(--border2)}
+.ptitle{font-size:.65rem;text-transform:uppercase;letter-spacing:.16em;color:var(--gold);font-weight:500;
+  margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ptitle::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border2),transparent)}
+
+/* Upload */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:26px 16px;text-align:center;
+  cursor:pointer;transition:all .25s;background:rgba(255,255,255,.02);user-select:none}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--gold);background:var(--gold-dim)}
+.upload-icon{font-size:2rem;margin-bottom:8px}
+.upload-zone p{font-size:.8rem;color:var(--text-dim);line-height:1.6}
+.upload-zone strong{color:var(--gold2);font-weight:500}
+#fileInput{display:none}
+
+/* Photo list */
+.photo-list{display:flex;flex-direction:column;gap:6px;max-height:190px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.photo-list::-webkit-scrollbar{width:3px}
+.photo-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.photo-item{display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px;animation:si .2s ease}
+@keyframes si{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.photo-item img{width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--border2)}
+.photo-item-name{flex:1;font-size:.75rem;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photo-remove{cursor:pointer;color:var(--text-dim);font-size:.85rem;padding:2px 5px;border-radius:4px;transition:all .15s;line-height:1}
+.photo-remove:hover{color:var(--red);background:rgba(192,57,43,.1)}
+.empty-hint{text-align:center;padding:16px;font-size:.78rem;color:var(--text-dim);font-style:italic;opacity:.6}
+
+/* Controls */
+.ctrl{margin-bottom:14px}
+.ctrl:last-child{margin-bottom:0}
+.ctrl label{display:block;font-size:.75rem;color:var(--text-dim);margin-bottom:7px;font-weight:400;letter-spacing:.02em}
+
+/* Toggle */
+.tgroup{display:flex;border:1px solid var(--border2);border-radius:var(--rs);overflow:hidden}
+.tbtn{flex:1;padding:9px 6px;background:transparent;border:none;color:var(--text-dim);
+  font-family:'Jost',sans-serif;font-size:.76rem;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:5px;border-right:1px solid var(--border2);line-height:1.3}
+.tbtn:last-child{border-right:none}
+.tbtn.active{background:var(--gold);color:#0e0c0a;font-weight:600}
+.tbtn:hover:not(.active){background:var(--gold-dim);color:var(--gold2)}
+.tbtn small{opacity:.6;font-size:.68rem}
+
+/* Range */
+.range-wrap{display:flex;align-items:center;gap:10px}
+.range-wrap input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer}
+.range-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--gold);cursor:pointer;transition:transform .15s}
+.range-wrap input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3)}
+.range-num{font-size:.78rem;color:var(--gold2);font-weight:500;min-width:34px;text-align:right}
+
+select{width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--rs);color:var(--text);font-family:'Jost',sans-serif;font-size:.82rem;
+  appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a6e62' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
+select:focus{outline:2px solid var(--gold);outline-offset:1px}
+
+/* Stats */
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+  background:var(--gold-dim);border:1px solid rgba(201,147,58,.2);border-radius:var(--rs)}
+.stat-label{font-size:.75rem;color:var(--text-dim)}
+.stat-value{font-size:1rem;font-weight:600;color:var(--gold2);font-family:'Cormorant Garamond',serif}
+
+/* Buttons */
+.brow{display:flex;flex-direction:column;gap:7px}
+.btn{width:100%;padding:13px 20px;border:none;border-radius:var(--rs);font-family:'Jost',sans-serif;
+  font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s;letter-spacing:.03em;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-gold{background:var(--gold);color:#0e0c0a}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,147,58,.3)}
+.btn-gold2{background:linear-gradient(135deg,#b8832a,var(--gold2));color:#0e0c0a}
+.btn-gold2:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,147,58,.25)}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text-dim)}
+.btn-outline:hover{border-color:var(--text-dim);color:var(--text)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+.tip{font-size:.72rem;color:var(--text-dim);line-height:1.7;padding:11px 13px;
+  background:rgba(255,255,255,.02);border-radius:var(--rs);border-left:2px solid var(--gold)}
+.tip strong{color:var(--cream2)}
+
+/* PREVIEW */
+.preview-col{min-width:0;display:flex;flex-direction:column;align-items:center;gap:20px}
+.preview-header{width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.preview-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--cream2);font-style:italic}
+.zoom-row{display:flex;align-items:center;gap:8px}
+.zbtn{width:30px;height:30px;background:var(--card);border:1px solid var(--border2);border-radius:6px;
+  color:var(--text-dim);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.zbtn:hover{border-color:var(--gold);color:var(--gold2)}
+.zlbl{font-size:.75rem;color:var(--text-dim);min-width:36px;text-align:center}
+
+.a4-outer{background:#2a2520;border-radius:4px;padding:20px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.3);position:relative}
+.a4-outer::before{content:'A4';position:absolute;top:6px;right:10px;
+  font-size:.6rem;color:rgba(255,255,255,.15);letter-spacing:.1em;font-weight:500}
+#a4Sheet{background:#fff;position:relative;overflow:hidden}
+
+/* Instax card on sheet */
+.ic{position:absolute;background:#fff;overflow:hidden}
+.ic .ic-top{position:absolute;top:0;left:0;right:0;background:#fff;z-index:2}
+.ic .ic-left{position:absolute;top:0;left:0;bottom:0;background:#fff;z-index:2}
+.ic .ic-right{position:absolute;top:0;right:0;bottom:0;background:#fff;z-index:2}
+.ic .ic-bottom{position:absolute;bottom:0;left:0;right:0;background:#fff;z-index:2}
+.ic .ic-photo{position:absolute;overflow:hidden;z-index:1}
+.ic .ic-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.ic.empty .ic-photo{background:linear-gradient(135deg,#f0e8d8,#e0d4c0);
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(100,80,60,.2);font-family:'Cormorant Garamond',serif;font-style:italic}
+
+/* STEPS */
+.instructions{max-width:1400px;margin:0 auto;padding:0 40px 80px}
+.instr-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--cream);margin-bottom:32px;text-align:center}
+.instr-title span{color:var(--gold2);font-style:italic}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.step{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px 20px;position:relative;overflow:hidden}
+.step::before{content:attr(data-n);position:absolute;top:-10px;right:14px;
+  font-family:'Cormorant Garamond',serif;font-size:5rem;font-weight:600;color:rgba(201,147,58,.07);line-height:1;user-select:none}
+.step-icon{font-size:1.5rem;margin-bottom:12px}
+.step h3{font-size:.85rem;font-weight:600;color:var(--cream);margin-bottom:6px}
+.step p{font-size:.78rem;color:var(--text-dim);line-height:1.6}
+
+footer{border-top:1px solid var(--border);padding:24px 40px;text-align:center;font-size:.75rem;color:var(--text-dim)}
+
+/* TOAST */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--gold);color:#0e0c0a;padding:12px 24px;border-radius:30px;
+  font-size:.85rem;font-weight:500;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Progress overlay */
+.progress-overlay{display:none;position:fixed;inset:0;background:rgba(14,12,10,.85);
+  z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.progress-overlay.show{display:flex}
+.progress-box{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);
+  padding:32px 40px;text-align:center;max-width:320px}
+.progress-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--cream);margin-bottom:8px}
+.progress-sub{font-size:.8rem;color:var(--text-dim);margin-bottom:20px;line-height:1.5}
+.progress-bar-wrap{height:6px;background:var(--border2);border-radius:3px;overflow:hidden}
+.progress-bar{height:100%;background:var(--gold);border-radius:3px;transition:width .3s;width:0%}
+
+@media(max-width:900px){
+  .app{grid-template-columns:1fr;padding:0 16px 40px}
+  .sidebar{position:static;max-height:none;padding:0}
+  header{padding:0 16px}
+  .hero{padding:48px 16px 36px}
+  .instructions{padding:0 16px 48px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:baseline">
+    <span class="logo-text">Instax Print</span>
+    <span class="logo-sub">фото на A4</span>
+  </div>
+  <div class="hbadge">точные рамки • 300 dpi</div>
+</header>
+
+<section class="hero">
+  <h1>Печатай <em>instax mini</em><br>дома на A4</h1>
+  <p>Загрузи фото — сайт разложит их с точными рамками как у оригинала. Скачай JPG и распечатай.</p>
+</section>
+
+<div class="app">
+  <aside class="sidebar">
+
+    <div class="panel">
+      <div class="ptitle">Загрузить фото</div>
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">🖼️</div>
+        <p>Нажми или перетащи сюда<br><strong>несколько фото</strong> сразу</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Мои фото &nbsp;<span id="countLbl" style="color:var(--gold2);font-size:.85rem">0</span></div>
+      <div class="photo-list" id="photoList">
+        <div class="empty-hint">Фото пока не добавлены</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Ориентация карточки</div>
+      <div class="ctrl">
+        <div class="tgroup">
+          <button class="tbtn active" id="btnL" onclick="setOrient('landscape')">
+            ▬ Горизонтальная<br><small>9 × 5.5 см</small>
+          </button>
+          <button class="tbtn" id="btnP" onclick="setOrient('portrait')">
+            ▮ Вертикальная<br><small>5.5 × 9 см</small>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Настройки листа</div>
+      <div class="ctrl">
+        <label>Отступ между карточками</label>
+        <div class="range-wrap">
+          <input type="range" id="gapR" min="1" max="12" value="4" step="1">
+          <span class="range-num" id="gapV">4 мм</span>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>Поля листа</label>
+        <div class="range-wrap">
+          <input type="range" id="margR" min="3" max="20" value="8" step="1">
+          <span class="range-num" id="margV">8 мм</span>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>Линия обрезки</label>
+        <select id="cutSel">
+          <option value="none">Без линии</option>
+          <option value="dash" selected>Пунктир (удобно резать)</option>
+          <option value="solid">Сплошная тонкая</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">На листе поместится</div>
+      <div class="stat-row">
+        <span class="stat-label" id="fitDesc">карточек</span>
+        <span class="stat-value" id="fitVal">—</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Сохранить</div>
+      <div class="brow">
+        <button class="btn btn-gold" id="dlJpg" onclick="doDownload('jpg')" disabled>
+          ⬇️ Скачать JPG — 300 dpi
+        </button>
+        <button class="btn btn-gold2" id="dlPng" onclick="doDownload('png')" disabled>
+          ⬇️ Скачать PNG — 300 dpi
+        </button>
+        <button class="btn btn-outline" id="printBtn" onclick="doPrint()" disabled>
+          🖨️ Напечатать напрямую
+        </button>
+        <button class="btn btn-outline" onclick="clearAll()" style="margin-top:3px">
+          🗑️ Очистить всё
+        </button>
+      </div>
+    </div>
+
+    <div class="tip">
+      💡 При печати выбери <strong>«Реальный размер» / 100%</strong>, формат <strong>A4</strong>, поля <strong>0 мм</strong> — карточки выйдут ровно нужного размера.
+    </div>
+
+  </aside>
+
+  <div class="preview-col">
+    <div class="preview-header">
+      <span class="preview-title">Предпросмотр листа A4</span>
+      <div class="zoom-row">
+        <button class="zbtn" onclick="zoom(-0.1)">−</button>
+        <span class="zlbl" id="zoomLbl">70%</span>
+        <button class="zbtn" onclick="zoom(+0.1)">+</button>
+      </div>
+    </div>
+    <div class="a4-outer">
+      <div id="a4Sheet"></div>
+    </div>
+  </div>
+</div>
+
+<section class="instructions">
+  <h2 class="instr-title">Как <span>распечатать</span></h2>
+  <div class="steps">
+    <div class="step" data-n="1">
+      <div class="step-icon">📷</div>
+      <h3>Загрузи фото</h3>
+      <p>Нажми на зону загрузки или перетащи фото. Можно сразу несколько — горизонтальных или вертикальных.</p>
+    </div>
+    <div class="step" data-n="2">
+      <div class="step-icon">⚙️</div>
+      <h3>Настрой лист</h3>
+      <p>Выбери ориентацию, отступы и линию обрезки. В предпросмотре сразу видно результат.</p>
+    </div>
+    <div class="step" data-n="3">
+      <div class="step-icon">⬇️</div>
+      <h3>Скачай JPG</h3>
+      <p>Нажми «Скачать JPG». Файл 300 dpi сохранится в папку Загрузки — можно нести в фотосалон.</p>
+    </div>
+    <div class="step" data-n="4">
+      <div class="step-icon">✂️</div>
+      <h3>Вырежи</h3>
+      <p>Режь по пунктирной линии. Карточки будут с точными рамками как у оригинального Instax Mini.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Instax Print — бесплатный инструмент. Все фото обрабатываются прямо в браузере, на сервер ничего не отправляется.
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- Progress overlay -->
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-box">
+    <div class="progress-title">Генерируем файл</div>
+    <div class="progress-sub" id="progressSub">Обрабатываем фото…</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   ТОЧНЫЕ РАЗМЕРЫ INSTAX MINI (мм)
+   Карточка: 86 × 54 мм (горизонт. если держать как обычно — 54×86)
+   Реальные размеры плёнки: 62×46 мм (фото)
+   Рамки: сверху ~3мм, по бокам ~3мм, снизу ~16мм
+   Мы делаем карточку 90×55 (чуть крупнее для удобства резки)
+   с теми же пропорциями рамок
+══════════════════════════════════════ */
+
+// Ориентация portrait: карточка 54×86 мм (держим вертикально)
+// В нашем масштабе: 55×90 мм
+// Рамки (мм):
+const FRAMES = {
+  landscape: { cw:90, ch:55, top:3, side:3, bottom:16 },
+  portrait:  { cw:55, ch:90, top:3, side:3, bottom:16 }
+};
+
+let photos   = [];
+let idCtr    = 0;
+let orient   = 'landscape';
+let zoomLvl  = 0.70;
+
+/* UPLOAD */
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => loadFiles(e.target.files));
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  loadFiles(e.dataTransfer.files);
+});
+
+function loadFiles(files) {
+  const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!arr.length) return;
+  let done = 0;
+  arr.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      photos.push({ id: ++idCtr, src: e.target.result, name: file.name });
+      if (++done === arr.length) { updateList(); render(); }
+    };
+    reader.readAsDataURL(file);
+  });
+  showToast(`Загружено ${arr.length} фото`);
+}
+
+/* LIST */
+function updateList() {
+  const el  = document.getElementById('photoList');
+  const cnt = photos.length;
+  document.getElementById('countLbl').textContent = cnt;
+  const dis = cnt === 0;
+  ['dlJpg','dlPng','printBtn'].forEach(id => document.getElementById(id).disabled = dis);
+
+  if (!cnt) { el.innerHTML = '<div class="empty-hint">Фото пока не добавлены</div>'; return; }
+  el.innerHTML = photos.map(p => `
+    <div class="photo-item">
+      <img src="${p.src}" alt="">
+      <span class="photo-item-name">${p.name}</span>
+      <span class="photo-remove" onclick="removePhoto(${p.id})">✕</span>
+    </div>`).join('');
+}
+
+function removePhoto(id) { photos = photos.filter(p => p.id !== id); updateList(); render(); }
+function clearAll() { photos = []; updateList(); render(); showToast('Список очищен'); }
+
+/* ORIENT */
+function setOrient(v) {
+  orient = v;
+  document.getElementById('btnL').classList.toggle('active', v === 'landscape');
+  document.getElementById('btnP').classList.toggle('active', v === 'portrait');
+  render();
+}
+
+/* CONTROLS */
+document.getElementById('gapR').addEventListener('input', e => {
+  document.getElementById('gapV').textContent = e.target.value + ' мм'; render();
+});
+document.getElementById('margR').addEventListener('input', e => {
+  document.getElementById('margV').textContent = e.target.value + ' мм'; render();
+});
+document.getElementById('cutSel').addEventListener('change', render);
+
+/* ZOOM */
+function zoom(d) {
+  zoomLvl = Math.max(0.3, Math.min(1.3, zoomLvl + d));
+  document.getElementById('zoomLbl').textContent = Math.round(zoomLvl * 100) + '%';
+  render();
+}
+
+/* ── RENDER PREVIEW ── */
+const A4W = 210, A4H = 297;
+
+function render() {
+  const f    = FRAMES[orient];
+  const gap  = parseInt(document.getElementById('gapR').value);
+  const marg = parseInt(document.getElementById('margR').value);
+  const cut  = document.getElementById('cutSel').value;
+
+  const cols = Math.floor((A4W - 2*marg + gap) / (f.cw + gap));
+  const rows = Math.floor((A4H - 2*marg + gap) / (f.ch + gap));
+  const total = cols * rows;
+
+  document.getElementById('fitVal').textContent  = `${cols}×${rows} = ${total}`;
+  document.getElementById('fitDesc').textContent = `${cols} по ширине × ${rows} по высоте`;
+
+  const SC = (A4W * zoomLvl * 3.7795) / A4W; // px per mm
+  const sheet = document.getElementById('a4Sheet');
+  sheet.style.width  = Math.round(A4W * SC) + 'px';
+  sheet.style.height = Math.round(A4H * SC) + 'px';
+  sheet.innerHTML = '';
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const idx   = r * cols + c;
+      const x_mm  = marg + c * (f.cw + gap);
+      const y_mm  = marg + r * (f.ch + gap);
+
+      const card = document.createElement('div');
+      card.className = 'ic' + (idx >= photos.length ? ' empty' : '');
+      card.style.cssText = `
+        left:${Math.round(x_mm*SC)}px;
+        top:${Math.round(y_mm*SC)}px;
+        width:${Math.round(f.cw*SC)}px;
+        height:${Math.round(f.ch*SC)}px;
+        border-radius:${Math.round(2.5*SC)}px;
+      `;
+
+      // Cut line
+      if (cut === 'dash') {
+        card.style.outline = `${Math.max(1,Math.round(SC*0.18))}px dashed rgba(0,0,0,0.22)`;
+        card.style.outlineOffset = '0px';
+      } else if (cut === 'solid') {
+        card.style.outline = `${Math.max(1,Math.round(SC*0.18))}px solid rgba(0,0,0,0.18)`;
+      }
+
+      // Photo area (inside frames)
+      const photoX = f.side * SC;
+      const photoY = f.top  * SC;
+      const photoW = (f.cw - 2*f.side) * SC;
+      const photoH = (f.ch - f.top - f.bottom) * SC;
+
+      const photoDiv = document.createElement('div');
+      photoDiv.className = 'ic-photo';
+      photoDiv.style.cssText = `left:${photoX}px;top:${photoY}px;width:${photoW}px;height:${photoH}px;border-radius:${Math.round(1*SC)}px;`;
+
+      if (idx < photos.length) {
+        const img = document.createElement('img');
+        img.src = photos[idx].src;
+        photoDiv.appendChild(img);
+      } else {
+        photoDiv.style.fontSize = Math.round(SC * 4) + 'px';
+        photoDiv.textContent = `фото ${idx+1}`;
+      }
+
+      card.appendChild(photoDiv);
+      sheet.appendChild(card);
+    }
+  }
+}
+
+/* ── BUILD HIGH-RES CANVAS (300 dpi) ── */
+function buildCanvas(onProgress) {
+  const f    = FRAMES[orient];
+  const gap  = parseInt(document.getElementById('gapR').value);
+  const marg = parseInt(document.getElementById('margR').value);
+  const cut  = document.getElementById('cutSel').value;
+
+  const cols = Math.floor((A4W - 2*marg + gap) / (f.cw + gap));
+  const rows = Math.floor((A4H - 2*marg + gap) / (f.ch + gap));
+
+  // 300 dpi: 1 mm = 11.811 px
+  const DPI = 11.811;
+  const CW  = Math.round(A4W * DPI); // 2480 px
+  const CH  = Math.round(A4H * DPI); // 3508 px
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = CW;
+  canvas.height = CH;
+  const ctx = canvas.getContext('2d');
+
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, CW, CH);
+
+  const totalCells = rows * cols;
+  let done = 0;
+
+  const promises = [];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const idx  = r * cols + c;
+      const xMM  = marg + c * (f.cw + gap);
+      const yMM  = marg + r * (f.ch + gap);
+
+      // Card pixel coords
+      const cx = Math.round(xMM  * DPI);
+      const cy = Math.round(yMM  * DPI);
+      const cw = Math.round(f.cw * DPI);
+      const ch = Math.round(f.ch * DPI);
+
+      // White card
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, cx, cy, cw, ch, Math.round(2.5 * DPI));
+      ctx.fill();
+
+      // Photo area pixel coords
+      const px = Math.round((xMM + f.side) * DPI);
+      const py = Math.round((yMM + f.top)  * DPI);
+      const pw = Math.round((f.cw - 2*f.side) * DPI);
+      const ph = Math.round((f.ch - f.top - f.bottom) * DPI);
+
+      if (idx < photos.length) {
+        const src = photos[idx].src;
+        promises.push(new Promise(res => {
+          const img = new Image();
+          img.onload = () => {
+            // Cover crop
+            const iA = img.width / img.height;
+            const tA = pw / ph;
+            let sx, sy, sw, sh;
+            if (iA > tA) {
+              sh = img.height; sw = sh * tA;
+              sx = (img.width - sw) / 2; sy = 0;
+            } else {
+              sw = img.width; sh = sw / tA;
+              sx = 0; sy = (img.height - sh) / 2;
+            }
+
+            // Clip to photo area with slight rounding
+            ctx.save();
+            ctx.beginPath();
+            roundRect(ctx, px, py, pw, ph, Math.round(1 * DPI));
+            ctx.clip();
+            ctx.drawImage(img, sx, sy, sw, sh, px, py, pw, ph);
+            ctx.restore();
+
+            // Redraw white card border on top (frames)
+            // Top frame
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(cx, cy, cw, Math.round(f.top * DPI));
+            // Bottom frame
+            ctx.fillRect(cx, cy + ch - Math.round(f.bottom * DPI), cw, Math.round(f.bottom * DPI));
+            // Left frame
+            ctx.fillRect(cx, cy, Math.round(f.side * DPI), ch);
+            // Right frame
+            ctx.fillRect(cx + cw - Math.round(f.side * DPI), cy, Math.round(f.side * DPI), ch);
+
+            done++;
+            if (onProgress) onProgress(done / totalCells);
+            res();
+          };
+          img.onerror = () => { done++; if (onProgress) onProgress(done/totalCells); res(); };
+          img.src = src;
+        }));
+      }
+
+      // Cut line
+      if (cut === 'dash') {
+        ctx.save();
+        ctx.setLineDash([Math.round(DPI*2.5), Math.round(DPI*1.8)]);
+        ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+        ctx.lineWidth = Math.round(DPI * 0.4);
+        roundRect(ctx, cx+2, cy+2, cw-4, ch-4, Math.round(2.5*DPI));
+        ctx.stroke();
+        ctx.restore();
+      } else if (cut === 'solid') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+        ctx.lineWidth = Math.round(DPI * 0.35);
+        roundRect(ctx, cx+2, cy+2, cw-4, ch-4, Math.round(2.5*DPI));
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
+  return Promise.all(promises).then(() => canvas);
+}
+
+// Helper: rounded rect path
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+/* Progress overlay */
+function showProgress(msg) {
+  document.getElementById('progressSub').textContent = msg;
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressOverlay').classList.add('show');
+}
+function setProgress(v) {
+  document.getElementById('progressBar').style.width = Math.round(v*100) + '%';
+}
+function hideProgress() {
+  document.getElementById('progressOverlay').classList.remove('show');
+}
+
+/* DOWNLOAD */
+function doDownload(fmt) {
+  if (!photos.length) return;
+  showProgress('Обрабатываем фото…');
+
+  buildCanvas(p => setProgress(p)).then(canvas => {
+    setProgress(1);
+    document.getElementById('progressSub').textContent = 'Сохраняем файл…';
+
+    const mime = fmt === 'png' ? 'image/png' : 'image/jpeg';
+    const q    = fmt === 'png' ? 1 : 0.97;
+    const ext  = fmt;
+
+    canvas.toBlob(blob => {
+      hideProgress();
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.href = url;
+      a.download = `instax-A4.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+      showToast(`Файл instax-A4.${ext} скачан ✓`);
+    }, mime, q);
+  }).catch(() => { hideProgress(); showToast('Ошибка — попробуй ещё раз'); });
+}
+
+/* PRINT */
+function doPrint() {
+  if (!photos.length) return;
+  showProgress('Подготавливаем печать…');
+
+  buildCanvas(p => setProgress(p)).then(canvas => {
+    hideProgress();
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.97);
+    const win = window.open('', '_blank');
+    if (!win) { alert('Разреши всплывающие окна для этого сайта!'); return; }
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Instax Print</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:210mm;height:297mm;background:#fff}
+img{width:210mm;height:297mm;display:block}
+@page{size:A4 portrait;margin:0}@media print{img{width:210mm;height:297mm}}</style></head>
+<body><img src="${dataUrl}"><script>window.addEventListener('load',()=>setTimeout(()=>window.print(),300));<\/script></body></html>`);
+    win.document.close();
+    showToast('Окно печати открыто ✓');
+  }).catch(() => { hideProgress(); });
+}
+
+/* TOAST */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* INIT */
+updateList();
+render();
+window.addEventListener('resize', render);
+</script>
+</body>
+</html>
